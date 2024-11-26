@@ -1,0 +1,3 @@
+/Users/kristina_mbp/Downloads/gameProject/CMakeFiles/gameProject.dir
+/Users/kristina_mbp/Downloads/gameProject/CMakeFiles/edit_cache.dir
+/Users/kristina_mbp/Downloads/gameProject/CMakeFiles/rebuild_cache.dir
