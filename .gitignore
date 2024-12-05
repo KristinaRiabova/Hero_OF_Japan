@@ -361,3 +361,46 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+
+# Игнорирование логов
+*.log
+
+# Игнорирование файлов временных данных
+*.tmp
+*.bak
+*.swp
+
+# Игнорирование файлов сборки
+build/
+bin/
+obj/
+out/
+
+# Игнорирование файлов, связанных с системой сборки (например, Make)
+Makefile
+makefile
+Makefile.*
+*.mk
+
+# Игнорирование специфичных IDE файлов
+.vscode/
+.idea/
+.project
+.classpath
+
+# Игнорирование операционных системных файлов
+.DS_Store
+Thumbs.db
+
+.json
+.ninja
+.ninja_deps
+
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+cmake-build-*/
+out/
+Makefile
