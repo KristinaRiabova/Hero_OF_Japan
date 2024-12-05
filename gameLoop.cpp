@@ -11,12 +11,13 @@
 #include "Npc.h"
 #include "Apple.h"
 #include "TextureManager.h"
+#include "Panda.h"
 
 void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, AudioManager &audioManager)
 {
     sf::Time TimeOnPause;
     sf::Font font;
-    if (!font.loadFromFile("arial.ttf"))
+    if (!font.loadFromFile("./font/PressStart2P-Regular.ttf"))
     {
         std::cerr << "Failed to load font\n";
         return;
@@ -42,6 +43,12 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
         return;
     }
 
+    Panda panda;
+    if (!panda.load(textureManager.getTexture("panda"), font))
+    {
+        return;
+    }
+
     Apple apple(textureManager.getTexture("apple"), sf::Vector2f(100, 560));
     bool isPause = false;
     bool isWinInactive = false;
@@ -62,18 +69,18 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
     time.setFillColor(sf::Color::Black);
     time.setPosition(10, 10);
 
-    sf::Text questMessage("Press E to interact", font, 14);
+    sf::Text questMessage("Press E", font, 10);
     questMessage.setFillColor(sf::Color::Black);
     questMessage.setPosition(550, 450);
 
     while (window.isOpen())
     {
         sf::Event event;
-        
+
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
-            
+
                 window.close();
 
             if (window.hasFocus())
@@ -93,11 +100,11 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                         {
                             if (npc.isQuestWindowOpen())
                             {
-                                npc.setCanTalkAfterQuest(true); 
+                                npc.setCanTalkAfterQuest(true);
                                 std::cout << "You can talk to the NPC again!" << std::endl;
                             }
 
-                           if (!questAccepted)
+                            if (!questAccepted)
                             {
                                 npc.openQuestWindow([&](bool accepted)
                                                     {
@@ -106,14 +113,12 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                                                             std::cout << "Quest accepted!\n";
                                                         } else {
                                                             std::cout << "Quest rejected!\n";
-                                                        }
-                                                    });
+                                                        } });
                             }
                             else
                             {
-                                std::cout << "Quest already accepted!\n"; 
+                                std::cout << "Quest already accepted!\n";
                             }
-
                         }
                     }
 
@@ -139,6 +144,7 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                             pause.setString("");
                             backgroundMusic->play();
                             npc.setPaused(false);
+                            panda.setPaused(false);
                         }
                         else
                         {
@@ -147,6 +153,7 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                             pause.setString("Pause");
                             backgroundMusic->pause();
                             npc.setPaused(true);
+                            panda.setPaused(true);
                         }
                     }
 
@@ -157,6 +164,10 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                         {
                             hero.serialize(outFile, clock.getElapsedTime() - TimeOnPause);
                             npc.serialize(outFile);
+                            panda.serialize(outFile);
+                   
+                            audioManager.saveMusicProgress("background_music", outFile);
+
                             outFile.close();
                             std::cout << "Game progress saved.\n";
                         }
@@ -174,7 +185,12 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                             sf::Time loadedTime;
                             hero.deserialize(inFile, loadedTime);
                             npc.deserialize(inFile);
+                            panda.deserialize(inFile);
                             TimeOnPause = clock.getElapsedTime() - loadedTime;
+
+                           
+                            audioManager.loadMusicProgress("background_music", inFile);
+
                             inFile.close();
                             std::cout << "Game progress loaded.\n";
                         }
@@ -212,24 +228,20 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
         if (npcIdle)
         {
             npc.idleAnimation(clock.getElapsedTime());
-           
-            
+            panda.idleAnimation(clock.getElapsedTime());
         }
 
-       
-
         
-        
-
         window.clear();
         window.draw(background);
         window.draw(time);
         window.draw(pause);
-       
+        window.draw(panda);
         window.draw(npc);
         window.draw(hero);
         window.draw(wall);
         
+
         window.draw(apple);
 
         if (questAccepted)
@@ -240,27 +252,26 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
             {
                 questMessage.setString("You have completed the quest!");
                 questMessage.setPosition(250, 100);
+                
             }
         }
 
-         if (hero.getBounds().left + hero.getBounds().width >= 520 && hero.getBounds().left <= 660)
+        if (hero.getBounds().left + hero.getBounds().width >= 520 && hero.getBounds().left <= 660)
         {
-            if (npc.isQuestCompleted()) 
-            {   questMessage.setString("You have completed the quest!");
+            if (npc.isQuestCompleted())
+            {
+                questMessage.setString("You have completed the quest!");
                 questMessage.setPosition(250, 100);
                 window.draw(questMessage);
-                npc.setupThankYouText(); 
-                window.draw(npc.getThankYouText()); 
+                npc.setupThankYouText();
+                window.draw(npc.getThankYouText());
             }
-            else if (!npc.isQuestWindowOpen()) 
+            else if (!npc.isQuestWindowOpen())
             {
-                
-                window.draw(questMessage); 
+
+                window.draw(questMessage);
             }
         }
-
-      
-        
 
         window.display();
 

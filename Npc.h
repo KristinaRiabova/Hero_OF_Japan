@@ -88,11 +88,11 @@ public:
         font = fnt;
 
         questWindowText.setFont(font);
-        questWindowText.setString("OH! Are u new here?\nI need your help stranger.\nI feel ill, can u bring me an apple,pls.\nDo you want to take the quest?\nYes: [Y] No: [N]");
-        questWindowText.setCharacterSize(18);
+        questWindowText.setString("OH! Are u new here?\nI need your help stranger.\nI feel ill,\ncan u bring me an apple?\nDo you want to take the quest?\nYes: [Y] No: [N]");
+        questWindowText.setCharacterSize(12);
         questWindowText.setFillColor(sf::Color::White);
 
-        questWindowBackground.setSize(sf::Vector2f(350, 150));
+        questWindowBackground.setSize(sf::Vector2f(400, 150));
         questWindowBackground.setFillColor(sf::Color(0, 0, 0, 150));
         questWindowBackground.setPosition(400, 300);
 
@@ -121,9 +121,9 @@ public:
             thankYouText.setFont(font);
             thankYouText.setString("Thank you hero for helping me!");
             thankYouText.setCharacterSize(12);
-            thankYouText.setFillColor(sf::Color::Black);
+            thankYouText.setFillColor(sf::Color::Green);
             thankYouText.setPosition(500, 450);
-            hasBeenThanked = true;  // Set the flag to true after showing the thank you text
+            hasBeenThanked = true; 
         }
     }
 
@@ -200,18 +200,25 @@ public:
         outFile.write(reinterpret_cast<const char *>(&numTexture), sizeof(numTexture));
         outFile.write(reinterpret_cast<const char *>(&questAlreadyAccepted), sizeof(questAlreadyAccepted));
         outFile.write(reinterpret_cast<const char *>(&questCompleted), sizeof(questCompleted));
+        outFile.write(reinterpret_cast<const char *>(&canTalkAfterQuest), sizeof(canTalkAfterQuest));
+        outFile.write(reinterpret_cast<const char *>(&hasBeenThanked), sizeof(hasBeenThanked));
     }
 
-    void deserialize(std::ifstream &inFile)
+   void deserialize(std::ifstream &inFile)
     {
         sf::Vector2f position;
         inFile.read(reinterpret_cast<char *>(&position), sizeof(position));
         npcSprite.setPosition(position);
+
         inFile.read(reinterpret_cast<char *>(&numTexture), sizeof(numTexture));
         npcSprite.setTextureRect(sf::IntRect(numTexture * 128, 0, 128, 128));
+
         inFile.read(reinterpret_cast<char *>(&questAlreadyAccepted), sizeof(questAlreadyAccepted));
         inFile.read(reinterpret_cast<char *>(&questCompleted), sizeof(questCompleted));
+        inFile.read(reinterpret_cast<char *>(&canTalkAfterQuest), sizeof(canTalkAfterQuest));
+        inFile.read(reinterpret_cast<char *>(&hasBeenThanked), sizeof(hasBeenThanked));
     }
+
 
     void update(sf::Time deltaTime)
     {

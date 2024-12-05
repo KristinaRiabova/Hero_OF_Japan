@@ -4,7 +4,8 @@
 #include <string>
 #include <iostream>
 #include <stdexcept>
-#include <memory> 
+#include <memory>
+#include <fstream>
 
 class AudioManager {
 private:
@@ -31,6 +32,22 @@ public:
             throw std::runtime_error("Music not found");
         }
         return it->second.get();  
+    }
+
+    
+
+    void saveMusicProgress(const std::string& key, std::ofstream& outFile) {
+        auto music = getMusic(key);
+        float musicTime = music->getPlayingOffset().asSeconds();
+        outFile.write(reinterpret_cast<const char*>(&musicTime), sizeof(musicTime));
+    }
+
+   
+    void loadMusicProgress(const std::string& key, std::ifstream& inFile) {
+        auto music = getMusic(key);
+        float musicTime;
+        inFile.read(reinterpret_cast<char*>(&musicTime), sizeof(musicTime));
+        music->setPlayingOffset(sf::seconds(musicTime));
     }
 
 };
