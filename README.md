@@ -134,3 +134,18 @@ When the game window is inactive, in addition to pausing, key press events are n
 
 ---
 
+<img width="1728" alt="Screenshot 2024-12-05 at 20 58 52" src="https://github.com/user-attachments/assets/c4a44209-9776-42e1-8090-9f2f89bd3f61">
+
+---
+
+![Idle copy](https://github.com/user-attachments/assets/b63ad1df-a796-455e-8b46-04a002735838)
+
+---
+
+![PandaWave copy](https://github.com/user-attachments/assets/396f2437-fc29-44f3-92a1-8a1ef40b8f4a)
+
+---
+
+![Walk copy](https://github.com/user-attachments/assets/0e306b52-c2f8-4e7f-b388-bd1f113917dd)
+
+---
