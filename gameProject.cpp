@@ -34,4 +34,6 @@ string GetTime(sf::Time elapsed) {
     timeStream << std::setfill('0') << std::setw(2) << minutes
         << ":" << std::setfill('0') << std::setw(2) << seconds;
     return timeStream.str();
+
+    
 }

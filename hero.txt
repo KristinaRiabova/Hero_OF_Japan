@@ -1,0 +1,217 @@
+#pragma once
+#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <fstream>
+#include "TextureManager.h"
+#include "AnimationState.h"
+
+class Hero : public sf::Drawable, public sf::Transformable
+{
+private:
+    enum Direction
+    {
+        left,
+        right
+    };
+
+    sf::Texture idleTexture;
+    sf::Clock animationClock;
+    sf::Texture walkTexture;
+    sf::Texture jumpTexture;
+    sf::Sprite heroSprite;
+    Direction direct = Direction::right;
+    int numTexture = 0;
+    int WalkcountTextures = 8;
+    int IdlecountTextures = 6;
+
+    AnimationState currentState = AnimationState::Idle;
+
+    virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override
+    {
+        states.transform *= getTransform();
+
+        // Set texture based on the current animation state
+        switch (currentState)
+        {
+        case AnimationState::Idle:
+            states.texture = &idleTexture;
+            break;
+        case AnimationState::Walk:
+            states.texture = &walkTexture;
+            break;
+        }
+
+        target.draw(heroSprite, states);
+    }
+
+    void updateIdleTexture(sf::Time deltaTime)
+    {
+        if (animationClock.getElapsedTime().asSeconds() > 0.1f) // Frame delay (0.1 sec)
+        {
+            heroSprite.setTextureRect(sf::IntRect(numTexture * 128, 0, 128, 128));
+            numTexture++;
+
+            if (numTexture == IdlecountTextures)
+            {
+                numTexture = 0;
+            }
+
+            animationClock.restart(); 
+        }
+    }
+
+    void updateWalkTexture(sf::Time deltaTime)
+    {
+        if (animationClock.getElapsedTime().asSeconds() > 0.1f) // Frame delay (0.1 sec)
+        {
+            heroSprite.setTextureRect(sf::IntRect(numTexture * 128, 0, 128, 128));
+            numTexture++;
+
+            if (numTexture == WalkcountTextures)
+            {
+                numTexture = 0;
+            }
+
+            animationClock.restart();
+        }
+    }
+
+public:
+    Hero() {}
+
+    bool load(const sf::Texture &heroIdle, const sf::Texture &heroWalk, unsigned int width, unsigned int height)
+    {
+        if (!heroIdle.getSize().x || !heroIdle.getSize().y || !heroWalk.getSize().x || !heroWalk.getSize().y)
+        {
+            std::cerr << "Error: Invalid texture size." << std::endl;
+            return false;
+        }
+
+        setIdleTexture(heroIdle);
+        setWalkTexture(heroWalk);
+
+        heroSprite.setTexture(idleTexture); // Default texture (idle)
+        heroSprite.setTextureRect(sf::IntRect(0, 0, width, height));
+        heroSprite.setOrigin(heroSprite.getLocalBounds().width / 2, heroSprite.getLocalBounds().height / 2);
+        heroSprite.setPosition(heroSprite.getLocalBounds().width / 2, 500);
+
+        return true;
+    }
+
+    void setIdleTexture(const sf::Texture &texture)
+    {
+        if (texture.getSize().x && texture.getSize().y)
+        {
+            idleTexture = texture;
+        }
+        else
+        {
+            std::cerr << "Error: Invalid idle texture." << std::endl;
+        }
+    }
+
+    void setWalkTexture(const sf::Texture &texture)
+    {
+        if (texture.getSize().x && texture.getSize().y)
+        {
+            walkTexture = texture;
+        }
+        else
+        {
+            std::cerr << "Error: Invalid walk texture." << std::endl;
+        }
+    }
+
+    void move(int dx, int dy, sf::Time deltaTime)
+    {
+        // Update the texture for the new animation state
+        if (dx == 0 && dy == 0)
+        {
+            setState(AnimationState::Idle);  // Set to idle if no movement
+        }
+        else
+        {
+            setState(AnimationState::Walk);  // Set to walk if moving
+        }
+
+        // Update the position
+        int newPositionX = heroSprite.getPosition().x + dx;
+        int newPositionY = heroSprite.getPosition().y - dy;
+
+        // Bound the position to the screen
+        newPositionX = std::max(0, std::min(newPositionX, 800));
+        newPositionY = std::max(500, std::min(newPositionY, 530));
+
+        // Flip the sprite depending on direction
+        if (dx > 0)
+        {
+            if (direct == Direction::left)
+                heroSprite.setScale(1.f, 1.f);
+            direct = Direction::right;
+        }
+        else if (dx < 0)
+        {
+            if (direct == Direction::right)
+                heroSprite.setScale(-1.f, 1.f);
+            direct = Direction::left;
+        }
+
+        heroSprite.setPosition(newPositionX, newPositionY);
+
+        std::cout << "Hero Position: " << newPositionX << ", " << newPositionY << std::endl;
+
+        update(deltaTime); // Update animation frames
+    }
+
+    void setState(AnimationState newState)
+    {
+        if (currentState != newState)
+        {
+            std::cout << "Changing animation state: " << static_cast<int>(newState) << std::endl;
+            currentState = newState;
+            numTexture = 0; 
+            animationClock.restart(); // Reset animation frames when changing state
+        }
+    }
+
+    void serialize(std::ofstream &outFile, sf::Time gameTime) const
+    {
+        sf::Vector2f position = heroSprite.getPosition();
+        outFile.write(reinterpret_cast<const char *>(&position), sizeof(position));
+        outFile.write(reinterpret_cast<const char *>(&numTexture), sizeof(numTexture));
+        outFile.write(reinterpret_cast<const char *>(&gameTime), sizeof(gameTime));
+
+        std::cout << "Serialized position: " << position.x << ", " << position.y << std::endl;
+    }
+
+    void deserialize(std::ifstream &inFile, sf::Time &gameTime)
+    {
+        sf::Vector2f position;
+        inFile.read(reinterpret_cast<char *>(&position), sizeof(position));
+        heroSprite.setPosition(position);
+
+        inFile.read(reinterpret_cast<char *>(&numTexture), sizeof(numTexture));
+        updateWalkTexture(sf::Time()); // Update texture based on deserialized state
+
+        inFile.read(reinterpret_cast<char *>(&gameTime), sizeof(gameTime));
+
+        std::cout << "Deserialized position: " << position.x << ", " << position.y << std::endl;
+    }
+
+    sf::FloatRect getBounds() const
+    {
+        return heroSprite.getGlobalBounds();
+    }
+
+    void update(sf::Time deltaTime)
+    {
+        if (currentState == AnimationState::Idle)
+        {
+            updateIdleTexture(deltaTime);
+        }
+        else
+        {
+            updateWalkTexture(deltaTime);
+        }
+    }
+};

@@ -9,12 +9,16 @@
 #include <sstream>
 #include "Utils.h"
 #include "Npc.h"
-#include "Apple.h"
-#include "TextureManager.h"
 #include "Panda.h"
+#include "SceneGraphNode.h"
+#include "SpatialPartition.h"
+
+#include "Wall.h"
+#include "Cloud.h"
 
 void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, AudioManager &audioManager)
 {
+    SpatialPartition spatialPartition(128, 800, 600);
     sf::Time TimeOnPause;
     sf::Font font;
     if (!font.loadFromFile("./font/PressStart2P-Regular.ttf"))
@@ -28,8 +32,12 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
     backgroundMusic->play();
 
     sf::Sprite background(textureManager.getTexture("background"));
-    sf::Sprite wall(textureManager.getTexture("wall"));
-    wall.setPosition(200, 550);
+
+    Npc npc;
+    if (!npc.load(textureManager.getTexture("npc")))
+    {
+        return;
+    }
 
     Hero hero;
     if (!hero.load(textureManager.getTexture("hero"), 128, 128))
@@ -37,41 +45,46 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
         return;
     }
 
-    Npc npc;
-    if (!npc.load(textureManager.getTexture("npc"), font))
-    {
-        return;
-    }
+    Cloud cloud1(textureManager.getTexture("cloud"), sf::Vector2f(100.f, 50.f), sf::Vector2f(0.1f, 0.f));
+    Cloud cloud2(textureManager.getTexture("cloud"), sf::Vector2f(400.f, 100.f), sf::Vector2f(-0.08f, 0.f));
 
-    Panda panda;
-    if (!panda.load(textureManager.getTexture("panda"), font))
-    {
-        return;
-    }
+    Wall wall1(10, 100, 500, 550);
 
-    Apple apple(textureManager.getTexture("apple"), sf::Vector2f(100, 560));
+    Wall wall2(10, 100, 10, 550);
+
+    auto rootNode = std::make_shared<SceneGraphNode>(nullptr, nullptr);
+    auto backgroundNode = std::make_shared<SceneGraphNode>(&background, &background);
+
+    auto heroNode = std::make_shared<SceneGraphNode>(&hero, &hero);
+    auto npcNode = std::make_shared<SceneGraphNode>(&npc, &npc);
+    auto wall1Node = std::make_shared<SceneGraphNode>(&wall1, &wall1);
+    auto wall2Node = std::make_shared<SceneGraphNode>(&wall2, &wall2);
+    auto cloud1Node = std::make_shared<SceneGraphNode>(&cloud1, &cloud1);
+    auto cloud2Node = std::make_shared<SceneGraphNode>(&cloud2, &cloud2);
+
+    rootNode->addChild(backgroundNode);
+    rootNode->addChild(heroNode);
+    rootNode->addChild(npcNode);
+    rootNode->addChild(wall1Node);
+    rootNode->addChild(wall2Node);
+    rootNode->addChild(cloud1Node);
+    rootNode->addChild(cloud2Node);
+
     bool isPause = false;
     bool isWinInactive = false;
     bool npcIdle = true;
-
-    bool questAccepted = false;
-
-    std::vector<sf::Vector2f> apples;
+    bool heroIdle = true;
 
     sf::Clock clock;
     sf::Clock pauseClock;
 
     sf::Text pause = sf::Text("", font, 14);
-    pause.setColor(sf::Color(0, 0, 0));
+    pause.setFillColor(sf::Color(0, 0, 0));
     pause.setPosition(720, 10);
 
     sf::Text time("Time game: 00:00", font, 14);
     time.setFillColor(sf::Color::Black);
     time.setPosition(10, 10);
-
-    sf::Text questMessage("Press E", font, 10);
-    questMessage.setFillColor(sf::Color::Black);
-    questMessage.setPosition(550, 450);
 
     while (window.isOpen())
     {
@@ -80,7 +93,6 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
         while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
-
                 window.close();
 
             if (window.hasFocus())
@@ -94,57 +106,37 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                 if (event.type == sf::Event::KeyPressed)
                 {
 
-                    if (event.key.code == sf::Keyboard::E)
-                    {
-                        if (hero.getBounds().intersects(npc.getBounds()))
-                        {
-                            if (npc.isQuestWindowOpen())
-                            {
-                                npc.setCanTalkAfterQuest(true);
-                                std::cout << "You can talk to the NPC again!" << std::endl;
-                            }
-
-                            if (!questAccepted)
-                            {
-                                npc.openQuestWindow([&](bool accepted)
-                                                    {
-                                                        questAccepted = accepted;
-                                                        if (accepted) {
-                                                            std::cout << "Quest accepted!\n";
-                                                        } else {
-                                                            std::cout << "Quest rejected!\n";
-                                                        } });
-                            }
-                            else
-                            {
-                                std::cout << "Quest already accepted!\n";
-                            }
-                        }
-                    }
-
                     if (!isPause)
                     {
                         if (event.key.code == sf::Keyboard::Left)
-                            hero.move(-10, 0);
+                        {
+                            hero.move(-10, 0, wall1, wall2);
+                        }
                         else if (event.key.code == sf::Keyboard::Right)
-                            hero.move(10, 0);
+                        {
+                            hero.move(10, 0, wall1, wall2);
+                        }
                         else if (event.key.code == sf::Keyboard::Up)
-                            hero.move(0, 10);
+                        {
+                            hero.move(0, 10, wall1, wall2);
+                        }
                         else if (event.key.code == sf::Keyboard::Down)
-                            hero.move(0, -10);
+                        {
+                            hero.move(0, -10, wall1, wall2);
+                        }
                     }
 
                     if (event.key.code == sf::Keyboard::P)
                     {
                         if (isPause)
                         {
+
                             isPause = false;
                             TimeOnPause += pauseClock.getElapsedTime();
                             pauseClock.restart();
                             pause.setString("");
                             backgroundMusic->play();
                             npc.setPaused(false);
-                            panda.setPaused(false);
                         }
                         else
                         {
@@ -153,7 +145,6 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                             pause.setString("Pause");
                             backgroundMusic->pause();
                             npc.setPaused(true);
-                            panda.setPaused(true);
                         }
                     }
 
@@ -164,8 +155,9 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                         {
                             hero.serialize(outFile, clock.getElapsedTime() - TimeOnPause);
                             npc.serialize(outFile);
-                            panda.serialize(outFile);
-                   
+                            cloud1.serialize(outFile); // Save cloud1 data
+                            cloud2.serialize(outFile); // Save cloud2 data
+
                             audioManager.saveMusicProgress("background_music", outFile);
 
                             outFile.close();
@@ -185,10 +177,11 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                             sf::Time loadedTime;
                             hero.deserialize(inFile, loadedTime);
                             npc.deserialize(inFile);
-                            panda.deserialize(inFile);
+                            cloud1.deserialize(inFile); // Load cloud1 data
+                            cloud2.deserialize(inFile); // Load cloud2 data
+
                             TimeOnPause = clock.getElapsedTime() - loadedTime;
 
-                           
                             audioManager.loadMusicProgress("background_music", inFile);
 
                             inFile.close();
@@ -199,15 +192,6 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                             std::cerr << "Failed to open file for loading game data.\n";
                         }
                     }
-                }
-
-                npc.handleInput(event);
-                if (hero.getBounds().intersects(apple.getBounds()) && !hero.getHasApple() && questAccepted && !hero.hasCollectedAppleThisQuest())
-                {
-                    hero.collectApple();
-                    apple = Apple(textureManager.getTexture("apple"), sf::Vector2f(rand() % 800, 550));
-                    hero.setCollectedAppleThisQuest(true);
-                    npc.checkQuestCompletion(hero);
                 }
             }
             else
@@ -227,51 +211,54 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
 
         if (npcIdle)
         {
+
             npc.idleAnimation(clock.getElapsedTime());
-            panda.idleAnimation(clock.getElapsedTime());
         }
 
-        
+        cloud1.update();
+        cloud2.update();
+
+        if (cloud1.getBounds().intersects(cloud2.getBounds()))
+        {
+            cloud1.resolveCollision();
+            cloud2.resolveCollision();
+        }
+
+        spatialPartition.clear();
+        sf::FloatRect heroBounds = hero.getBounds();
+        spatialPartition.insert(&heroBounds);
+
+        sf::FloatRect npcBounds = npc.getBounds();
+        spatialPartition.insert(&npcBounds);
+
+        sf::FloatRect cloud1Bounds = cloud1.getBounds();
+        spatialPartition.insert(&cloud1Bounds);
+
+        sf::FloatRect cloud2Bounds = cloud2.getBounds();
+        spatialPartition.insert(&cloud2Bounds);
+
+        sf::FloatRect wall1Bounds = wall1.getBounds();
+        spatialPartition.insert(&wall1Bounds);
+
+        sf::FloatRect wall2Bounds = wall2.getBounds();
+        spatialPartition.insert(&wall2Bounds);
+
+        auto nearbyObjects = spatialPartition.query(hero.getBounds());
+
+        for (const auto &obj : nearbyObjects)
+        {
+            if (hero.getBounds().intersects(*obj))
+            {
+
+                std::cout << "Collision detected with another object.\n";
+            }
+        }
+
         window.clear();
-        window.draw(background);
+
+        rootNode->draw(window, sf::RenderStates::Default);
         window.draw(time);
         window.draw(pause);
-        window.draw(panda);
-        window.draw(npc);
-        window.draw(hero);
-        window.draw(wall);
-        
-
-        window.draw(apple);
-
-        if (questAccepted)
-        {
-            questMessage.setString("Find an apple");
-            npc.checkQuestCompletion(hero);
-            if (npc.isQuestCompleted())
-            {
-                questMessage.setString("You have completed the quest!");
-                questMessage.setPosition(250, 100);
-                
-            }
-        }
-
-        if (hero.getBounds().left + hero.getBounds().width >= 520 && hero.getBounds().left <= 660)
-        {
-            if (npc.isQuestCompleted())
-            {
-                questMessage.setString("You have completed the quest!");
-                questMessage.setPosition(250, 100);
-                window.draw(questMessage);
-                npc.setupThankYouText();
-                window.draw(npc.getThankYouText());
-            }
-            else if (!npc.isQuestWindowOpen())
-            {
-
-                window.draw(questMessage);
-            }
-        }
 
         window.display();
 
