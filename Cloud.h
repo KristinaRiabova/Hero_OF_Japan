@@ -42,24 +42,26 @@ public:
         velocity.x = -velocity.x;
     }
 
-    // Serialization method to save Cloud's data
+ 
     void serialize(std::ofstream &outFile) const
     {
-        // Save position and velocity to file
+    
         outFile.write(reinterpret_cast<const char*>(&sprite.getPosition()), sizeof(sf::Vector2f));
         outFile.write(reinterpret_cast<const char*>(&velocity), sizeof(sf::Vector2f));
     }
 
-    // Deserialization method to load Cloud's data
+  
     void deserialize(std::ifstream &inFile)
     {
-        // Load position and velocity from file
+
         sf::Vector2f position;
         inFile.read(reinterpret_cast<char*>(&position), sizeof(sf::Vector2f));
         inFile.read(reinterpret_cast<char*>(&velocity), sizeof(sf::Vector2f));
 
         sprite.setPosition(position);
     }
+
+    
 
 private:
     virtual void draw(sf::RenderTarget &target, sf::RenderStates states) const override

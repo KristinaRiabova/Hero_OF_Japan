@@ -33,6 +33,8 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
 
     sf::Sprite background(textureManager.getTexture("background"));
 
+
+
     Npc npc;
     if (!npc.load(textureManager.getTexture("npc")))
     {
@@ -137,6 +139,7 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                             pause.setString("");
                             backgroundMusic->play();
                             npc.setPaused(false);
+
                         }
                         else
                         {
@@ -155,15 +158,15 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
                         {
                             hero.serialize(outFile, clock.getElapsedTime() - TimeOnPause);
                             npc.serialize(outFile);
-                            cloud1.serialize(outFile); // Save cloud1 data
-                            cloud2.serialize(outFile); // Save cloud2 data
+                            cloud1.serialize(outFile); 
+                            cloud2.serialize(outFile);
 
                             audioManager.saveMusicProgress("background_music", outFile);
 
                             outFile.close();
                             std::cout << "Game progress saved.\n";
                         }
-                        else
+                        else 
                         {
                             std::cerr << "Failed to open file for saving game data.\n";
                         }
@@ -219,10 +222,12 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
         cloud2.update();
 
         if (cloud1.getBounds().intersects(cloud2.getBounds()))
-        {
-            cloud1.resolveCollision();
-            cloud2.resolveCollision();
-        }
+    {
+        cloud1.resolveCollision();
+        cloud2.resolveCollision();
+
+    }
+
 
         spatialPartition.clear();
         sf::FloatRect heroBounds = hero.getBounds();
@@ -247,11 +252,20 @@ void runGameLoop(sf::RenderWindow &window, TextureManager &textureManager, Audio
 
         for (const auto &obj : nearbyObjects)
         {
-            if (hero.getBounds().intersects(*obj))
+
+
+             if (hero.getBounds().intersects(*obj))
             {
 
-                std::cout << "Collision detected with another object.\n";
+                
+            else if (cloud2.getBounds().intersects(*obj))
+            {
+
+                std::cout << "Collision detected with cloud2 object.\n";
             }
+            }
+
+
         }
 
         window.clear();

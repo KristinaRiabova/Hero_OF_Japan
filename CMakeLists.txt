@@ -18,7 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(SFML 2.6.2 COMPONENTS system window graphics REQUIRED)
 
 # Add source to this project's executable.
-add_executable (gameProject "gameProject.cpp" "gameProject.h"   "Hero.h" "TextureManager.h" "AudioManager.h" "LoadResources.h" "gameLoop.cpp" "Utils.h" "Npc.h" "Panda.h" "SceneGraphNode.h" "SpatialPartition.h"  "Wall.h" "Cloud.h" )
+add_executable (gameProject "gameProject.cpp" "gameProject.h"   "Hero.h" "TextureManager.h" "AudioManager.h" "LoadResources.h" "gameLoop.cpp" "Utils.h" "Npc.h" "Panda.h" "SceneGraphNode.h" "SpatialPartition.h"  "Wall.h" "Cloud.h"  )
 
 # Підключіть бібліотеки SFML до проєкту
 target_link_libraries(gameProject sfml-system sfml-window sfml-graphics sfml-audio)

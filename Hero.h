@@ -148,6 +148,7 @@ bool checkCollisionLeft(const Wall &wall2, const sf::Sprite &tempHeroSprite) con
     {
         return heroSprite.getGlobalBounds();
     }
+    
 
 
 

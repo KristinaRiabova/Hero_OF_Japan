@@ -13,6 +13,7 @@ bool loadResources(TextureManager& textureManager, AudioManager& audioManager) {
         textureManager.loadTexture("hero", "./images/Walk.png");
         textureManager.loadTexture("ally", "./images/image 5.png");  
         textureManager.loadTexture("npc", "./images/Idle.png");
+      
 
         
         textureManager.loadTexture("apple", "./images/apple_regular_30_30px.png"); 
